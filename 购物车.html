@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>购物车</title>
+	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.9/dist/vue.js"></script>
+	<style type="text/css">
+		*{padding: 0;margin: 0;list-style: none;}
+		.cart{width: 990px;margin:50px auto;}
+		button:focus,input:focus{outline: none;}
+		.cart_hd{height: 40px;background: #f3f3f3;border: 1px solid #ddd;line-height: 40px;font-size: 14px; color:#666;}
+		.cart_hd .hd1{float: left;padding-left: 15px;width: 100px;}
+		.cart_hd .hd1 .all_check{position: relative;top: 2px;margin-right: 5px;}
+		.cart_hd .hd2{float: left;padding-left: 15px;width: 338px;}
+		.cart_hd .hd3{float: left;padding-left: 15px;width: 150px;}
+		.cart_hd .hd4{float: left;padding-left: 15px;width: 80px;}
+		.cart_hd .hd5{float: left;padding-left: 15px;width: 130px;}
+		.cart_hd .hd6{float: left;padding-left: 15px;width: 70px;}
+
+		.shop{margin-top:15px;}
+		.shop h4{height: 25px;border-bottom: 2px solid #ccc;font-weight: normal;color:#333;padding-left: 15px;font-size: 14px;line-height: 25px;}
+		.shop h4 .shop_check{position: relative;top: 2px; margin-right:5px;}
+		.cart_list{border: 1px solid #ddd;padding: 15px;height: 80px;}
+		.cart_list .p1{float: left;width: 30px;}
+		.cart_list .p2{float: left;width: 420px; height: 80px;}
+		.cart_list .p2 .goods_img{float: left;width: 80px;}
+		.cart_list .p2 .goods_txt{float: left;width: 250px;margin-left:15px;font-size: 12px; color: #666;line-height: 24px; }
+		.cart_list .p3{float: left;font-size: 12px; color: #000;width: 150px;line-height: 26px;}
+		.cart_list .p4{float: left;width: 115px;}
+		.cart_list .p4 button{width: 20px;height: 20px;border: 1px solid #ddd;background: none;cursor: pointer;}
+		.cart_list .p4 .goods_num{border: 1px solid #ddd;border-left:0;border-right:0;height: 19px;width: 35px; padding-left: 3px;}
+		.cart_list .p5{float: left;font-size: 12px; color: #000;width: 155px;line-height: 26px;}
+		.cart_list .p6{float: left;}
+		.cart_list .p6 a.del{color: #666; text-decoration: none;font-size: 12px;line-height: 26px;}
+		.cart_foot{height: 50px; border: 1px solid #ddd; margin-top:20px;line-height: 50px;}
+		.cart_foot .total_num{float: right;font-size: 14px; color: #666;padding: 0 20px;}
+		.cart_foot .total_price{float: right;font-size: 14px; color: #666;padding: 0 20px;}
+		.cart_foot button{float: right;width: 96px;height: 50px;background: #e54346;border: 0;text-align: center;font-size: 18px;color: #fff;}
+	</style>
+</head>
+<body>
+	<div class="cart" id="app">
+		<div class="cart_hd">
+			<div class="hd1">
+				<input type="checkbox" id="all" class="all_check"  @click="chooseAll" v-model="fetchData.status">
+				<label for="all">全选</label></div>
+			<div class="hd2">商品</div>
+			<div class="hd3">单价</div>
+			<div class="hd4">数量</div>
+			<div class="hd5">小计</div>
+			<div class="hd6">操作</div>
+		</div>
+		<div class="cart_bd" v-for="(item,index) in fetchData.list">
+			<div class="shop" >
+				<h4><input type="checkbox" id="check" class="shop_check" id="shop_a" @click="chooseShop(index)" v-model="item.check" >{{item.shop_name}}</h4>
+				<label for="shop_a"></label>
+				<div class="cart_list" v-for="(pro,index1) in item.products">
+					<div class="p1">
+						<input type="checkbox" class="goods_check"   @click="chooseGood(index,index1)" id="checkbox_2" v-model="pro.checked">
+						<label for="checkbox_2"></label>
+					</div>
+					<div class="p2">
+						<div class="goods_img"><img :src="pro.img" ></div>
+						<div class="goods_txt">{{pro.text}}</div>
+					</div>
+					<div class="p3 price">{{pro.price | money}}</div>
+					<div class="p4"><button class="reduce" @click="reduce(index,index1)">-</button>
+						<input type="number" name="" class="goods_num" v-model="pro.num" />
+						<button class="add" @click="add(index,index1)">+</button></div>
+					<div class="p5 sum_price">{{pro.num * pro.price | money}}</div>
+					<div class="p6"><a href="javascript:;" class="del" @click="del(index,index1)">删除</a></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="cart_foot">
+			<button>去结算</button>
+			<div class="total_price">总价：<span>{{fetchData.allsum | money}}</span></div>
+			<div class="total_num">已选择<span>{{fetchData.allnum}}</span>件商品</div>
+		</div>
+	</div>
+	<script>
+	var app = new Vue({	
+		el:"#app",
+		data(){
+                return{
+                    fetchData:{
+                        list:[
+                            {
+                                shop_id:1,
+                                shop_name:'车工官方旗舰店',
+                                products:[
+                                    {
+                                        text:'嘉实多（Castrol） 极护 钛流体全合成机油 5W-30 FE SN级 4L 汽车用品',
+                                        price:30,
+                                        num:1,
+                                        img:'http://placehold.it/80X80',
+                                        sum:29,
+                                        checked:false//商品选中状态
+                                    },
+                                    {
+                                        text:'嘉实多（Castrol ）极护钛流体磁护启停保全合成机油半合成汽车机油润滑油 新磁护 SN 5W-40 4L装',
+                                        price:50,
+                                        num:1,
+                                        img:'http://placehold.it/80X80',
+                                        sum:29,
+                                        checked:false
+									},
+									{
+                                        text:'嘉实多（Castrol ）极护钛流体磁护启停保全合成机油半合成汽车机油润滑油 新磁护 SN 5W-40 4L装',
+                                        price:10,
+                                        num:1,
+                                        img:'http://placehold.it/80X80',
+                                        sum:29,
+                                        checked:false
+                                    }
+                                ],
+                                check:false,//店铺选中状态
+                                choose:0,//商品选中个数
+                            },
+                            {
+                                shop_id:2,
+                                shop_name:'京东自营',
+                                products:[
+                                    {
+                                        text:' 嘉实多（Castrol ）极护钛流体磁护启停保全合成机油半合成汽车机油润滑油 新款磁护启停保 5W-30 SN级 4L',
+                                        price:30,
+                                        num:1,
+                                        img:'http://placehold.it/80X80',
+                                        sum:50,
+                                        checked:false
+									},
+									{
+                                        text:' 嘉实多（Castrol ）极护钛流体磁护启停保全合成机油半合成汽车机油润滑油 新款磁护启停保 5W-30 SN级 4L',
+                                        price:20,
+                                        num:1,
+                                        img:'http://placehold.it/80X80',
+                                        sum:50,
+                                        checked:false
+                                    }
+                                ],
+                                check:false,
+                                choose:0,
+                            }
+                        ],
+                    status:false,//全选选中状态
+                    allchoose:0,//店铺选中个数
+                    allsum:0,//总计价格
+                    allnum:0//总计数量
+                    }
+                }
+            },
+		methods:{
+			//全选
+			chooseAll(){
+				this.fetchData.status = !this.fetchData.status
+				for(var i=0;i<this.fetchData.list.length;i++){
+					this.fetchData.list[i].check = this.fetchData.status
+					for(var j=0;j<this.fetchData.list[i].products.length;j++){
+						this.fetchData.list[i].products[j].checked = this.fetchData.status
+					}
+				}
+				this.count();
+			},
+			//店铺选择
+			chooseShop(index){
+				this.fetchData.list[index].check = !this.fetchData.list[index].check
+				for(var i=0;i<this.fetchData.list[index].products.length;i++){
+					this.fetchData.list[index].products[i].checked = this.fetchData.list[index].check
+				}
+				this.ischooseAll();
+				this.count()
+			},
+			chooseGood(index,index1){
+				this.fetchData.list[index].products[index1].checked =!this.fetchData.list[index].products[index1].checked;
+					if(this.fetchData.list[index].products[index1].checked){
+				        	var	flag = true;
+				 		for(i in this.fetchData.list[index].products){
+							if(!this.fetchData.list[index].products[i].checked){
+								flag = false;
+								break;
+							}
+						 }
+						 flag == true? this.fetchData.list[index].check=true :this.fetchData.list[index].check=false
+					}else{
+						this.fetchData.list[index].check=false
+					}
+				this.ischooseAll();
+				this.count()
+			},
+			//是否全选
+			ischooseAll(){
+				var flag = true;
+				for(var j=0;j<this.fetchData.list.length;j++){
+					if(!this.fetchData.list[j].check){
+						flag = false;
+						break;
+					}
+				}
+				flag == true ? this.fetchData.status=true : this.fetchData.status=false;
+				this.count();
+			},
+			//增加商品
+			add(index,index1){
+				this.fetchData.list[index].products[index1].num ++;
+				this.count();
+			},
+			//减少商品
+			reduce(index,index1){
+				if(this.fetchData.list[index].products[index1].num==1){
+					this.fetchData.list[index].products[index1].num=1
+				}else{
+					this.fetchData.list[index].products[index1].num--
+				}
+				this.count();
+			},
+			//删除商品
+			del(index,index1){
+				this.fetchData.list[index].products.splice(index1,1);
+				if(this.fetchData.list[index].products.length==0){
+					this.fetchData.list.splice(index,1)
+				}
+				this.count()
+			},
+			count(){
+				//件数,价格
+				this.fetchData.allnum = 0;
+				this.fetchData.allsum = 0;
+				for( i in this.fetchData.list){
+					for(j in this.fetchData.list[i].products){
+						if(this.fetchData.list[i].products[j].checked){
+							  this.fetchData.allnum += this.fetchData.list[i].products[j].num;
+							  this.fetchData.allsum += this.fetchData.list[i].products[j].num * this.fetchData.list[i].products[j].price;
+						}
+					}
+				}
+			},
+		},
+		filters:{
+			money:function(v){
+				return "￥" + v.toFixed(2)
+			}	
+		}
+	})
+	</script>
+</body>
+</html>
